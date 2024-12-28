@@ -1,0 +1,110 @@
+<!DOCTYPE HTML>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<!-- For ARTS 445: Net Art
+     Project 7: Interact
+     Mikko Tuomela mstuomel@illinois.edu 
+	 Kyungho Lee klee141@illinois.edu-->
+
+<head>
+<title>Confessing in the Night</title>
+<style>
+body {
+	background-color: black;
+	overflow: hidden;
+	position: static;
+	font-family: Consolas,'Courier New',monospace;
+	font-weight: normal;
+}
+div#letters {
+	width: 100%;
+}
+div.letter {
+	position: absolute;
+}
+div#confess {
+	color: white;
+	left: 0px;
+	bottom: 20px;
+}
+</style>
+</head>
+<body>
+<script src="https://cdn.firebase.com/js/client/1.0.11/firebase.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+  
+<div id="letters">
+</div>
+<input id="string" type="hidden" value="" />
+
+<div id="confess">confess.</id>
+
+<script>
+
+var N      = 15;   // Number of letters
+var MAX_Z  = 10; // Distance of farthest letter
+var MIN_Z  = 0.8;   // Distance of nearest letter
+var BASE_X = 1.5;  // X coordinate relative to origo
+var BASE_Y = 0.5;  // Y coordinate relative to origo
+var ZOOM   = 25;  // Zoom factor
+var BASE_FONT_SIZE = 15;
+var STEP_Z = (MAX_Z - MIN_Z) / (N - 1);
+
+// Add letter divs
+function create_letters() {
+	var letters_html = '';
+
+	for (var letter_i = 1; letter_i <= N; letter_i++) {
+		var z = MAX_Z - (letter_i - 1) * STEP_Z;
+		var x = 20 + ZOOM * BASE_X / z;
+		var y = ZOOM * BASE_Y / z;
+		var font_size = ZOOM * BASE_FONT_SIZE / z;
+		var color     = get_color_string(letter_i)
+		letters_html += get_letter_html(letter_i, x, y, font_size, color);
+		console.log(letter_i, x, y, z, font_size, color);
+	}
+
+	// Insert generated HTML into div#letters
+	document.getElementById('letters').innerHTML = letters_html;
+}
+
+// Get a hexadecimal color representation for a letter
+function get_color_string(letter_i) {
+	var base = Math.floor(letter_i / N * 255);
+	var total = 65536 * base + 256 * base + base
+	return '#' + total.toString(16)
+}
+
+// Create div HTML code for each letter
+function get_letter_html(letter_i, x, y, font_size, color) {
+	return '<div class="letter" ' + 'id="letter' + letter_i + 
+		   '" style="left:' + x + '%;top:' + Math.floor(y) +
+		   '%;font-size:' + Math.floor(font_size) + 'pt;color:' +
+		   color + ';"></div>\n';
+}
+
+create_letters();
+</script>
+
+<script>
+var fb = new Firebase('https://glowing-fire-5214.firebaseio.com');
+
+// Detect keypress
+$(document).keypress(function(e) {
+	if (e.which < 32) return;
+	fb.push({ text: String.fromCharCode(e.which) });
+});
+
+// Whenever db is updated, update letters
+fb.on('value', function(data) {
+	var letters      = data.val();
+	var letters_keys = Object.keys(letters);
+	for (var letter_i = N; letter_i > 0; letter_i--) {
+		var letter = letters[letters_keys.pop()].text;
+		document.getElementById('letter' + letter_i).innerHTML = letter;
+	}
+})
+</script>
+
+</body>
+</html>
