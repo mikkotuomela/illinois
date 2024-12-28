@@ -112,3 +112,4 @@ function waitForKeyElements (selectorTxt, actionFunction, bWaitOnce, iframeSelec
     waitForKeyElements.controlObj = controlObj;
     
 }
+main();
